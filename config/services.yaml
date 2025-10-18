@@ -1,0 +1,24 @@
+services:
+  Beerfranz\LicenceClientBundle\Service\LicenceService:
+    arguments:
+      $repo: '@Beerfranz\LicenceClientBundle\Repository\LicenceInstanceRepository'
+      $em: '@doctrine.orm.entity_manager'
+      $httpClient: '@http_client'
+      $rootDir: '%kernel.project_dir%'
+      $endpoint: '%env(LICENCE_ENDPOINT)%'
+
+  Beerfranz\LicenceClientBundle\Command\LicenceCheckCommand:
+    arguments:
+      $service: '@Beerfranz\LicenceClientBundle\Service\LicenceService'
+    tags: ['console.command']
+
+  Beerfranz\LicenceClientBundle\Repository\LicenceInstanceRepository:
+    class: Beerfranz\LicenceClientBundle\Repository\LicenceInstanceRepository
+    arguments:
+      $registry: '@doctrine'
+
+parameters:
+  # set default remote URL (override with env var in production)
+  env(LICENCE_ENDPOINT): 'https://localhost/data'
+  check_version_remote_url: '%env(LICENCE_ENDPOINT)%'
+  # set default to https://localhost/data
