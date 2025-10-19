@@ -6,6 +6,7 @@ services:
       $httpClient: '@http_client'
       $rootDir: '%kernel.project_dir%'
       $endpoint: '%env(LICENCE_ENDPOINT)%'
+      $product: '%product_name%'
 
   Beerfranz\LicenceClientBundle\Command\LicenceCheckCommand:
     arguments:
@@ -20,5 +21,4 @@ services:
 parameters:
   # set default remote URL (override with env var in production)
   env(LICENCE_ENDPOINT): 'https://localhost/data'
-  check_version_remote_url: '%env(LICENCE_ENDPOINT)%'
-  # set default to https://localhost/data
+  product_name: default

@@ -3,7 +3,7 @@
 namespace Beerfranz\LicenceClientBundle\Service;
 
 use Beerfranz\LicenceClientBundle\Entity\LicenceInstance;
-use Beerfranz\CLicenceClientBundle\Repository\LicenceInstanceRepository;
+use Beerfranz\LicenceClientBundle\Repository\LicenceInstanceRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -16,6 +16,7 @@ class LicenceService
         private HttpClientInterface $httpClient,
         private string $endpoint,
         private string $rootDir,
+        private string $product,
     ) {}
 
     /**
@@ -31,6 +32,7 @@ class LicenceService
 
         }
 
+        $entity->setProduct($this->product);
         $entity->setVersion($this->getVersion());
         $entity->setCodeVersion($this->getCodeVersion());
 
@@ -71,6 +73,12 @@ class LicenceService
         } catch(\Throwable $e) {
             throw $e->getMessage();
         }
+    }
+
+    public function refresh()
+    {
+        $instance = $this->getOrCreate();
+        $this->endpointSync($instance);
     }
 
     protected function getCodeVersion(): ?string
