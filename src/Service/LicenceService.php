@@ -17,6 +17,7 @@ class LicenceService
         private string $endpoint,
         private string $rootDir,
         private string $product,
+        private string $url,
     ) {}
 
     /**
@@ -54,6 +55,7 @@ class LicenceService
             'code_version' => $entity->getCodeVersion(),
             'version' => $entity->getVersion(),
             'product' => $entity->getProduct(),
+            'url' => $this->url,
         ];
         try {
             $response = $this->httpClient->request('POST', $this->endpoint, [
