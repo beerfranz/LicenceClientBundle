@@ -36,8 +36,25 @@ bin/console doctrine:migration:migrate
 
 ## Configuration
 
-Set the parameter `product_name` in `config/services.yaml`:
+Set this parameters in `config/services.yaml`:
 ```
 parameters:
     product_name: default
+    licence_endpoint: https://localhost/data
+    licence_client_frequency: '1 month'
+    licence_client_jitter_sec: '30'
+```
+
+Set env vars:
+* `URL`: the public URL of the application
+
+
+Configure messenger (need `composer require symfony/lock symfony/scheduler symfony/messenger`)
+
+```yaml
+# config/packages/messenger.yaml
+framework:
+    messenger:
+        transports:
+            async: 'doctrine://default?queue_name=default'
 ```

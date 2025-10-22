@@ -5,14 +5,20 @@ services:
       $em: '@doctrine.orm.entity_manager'
       $httpClient: '@http_client'
       $rootDir: '%kernel.project_dir%'
-      $endpoint: '%env(LICENCE_ENDPOINT)%'
+      $endpoint: '%licence_endpoint%'
       $product: '%product_name%'
       $url: '%env(URL)%'
 
   Beerfranz\LicenceClientBundle\Command\LicenceCheckCommand:
     arguments:
       $service: '@Beerfranz\LicenceClientBundle\Service\LicenceService'
-    tags: ['console.command']
+    tags: 
+      - 'console.command'
+      - name: 'scheduler.task'
+        trigger: 'every'
+        frequency: '%licence_client_frequency%'
+        jitter: '%licence_client_jitter_sec'
+        transports: ['async']
 
   Beerfranz\LicenceClientBundle\Repository\LicenceInstanceRepository:
     class: Beerfranz\LicenceClientBundle\Repository\LicenceInstanceRepository
@@ -22,5 +28,8 @@ services:
 parameters:
   # set default remote URL (override with env var in production)
   env(LICENCE_ENDPOINT): 'https://localhost/data'
+  licence_endpoint: '%env(LICENCE_ENDPOINT)%'
   product_name: default
   env(URL): https://localhost
+  licence_client_frequency: '1 month'
+  licence_client_jitter_sec: '30'
