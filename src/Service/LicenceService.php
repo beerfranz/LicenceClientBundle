@@ -4,9 +4,13 @@ namespace Beerfranz\LicenceClientBundle\Service;
 
 use Beerfranz\LicenceClientBundle\Entity\LicenceInstance;
 use Beerfranz\LicenceClientBundle\Repository\LicenceInstanceRepository;
+use Beerfranz\LicenceClientBundle\Message\LicenceMessageInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
+
+use Psr\Log\LoggerInterface;
 
 class LicenceService
 {
@@ -14,6 +18,8 @@ class LicenceService
         private LicenceInstanceRepository $repo,
         private EntityManagerInterface $em,
         private HttpClientInterface $httpClient,
+        private LoggerInterface $logger,
+        private MessageBusInterface $bus,
         private string $endpoint,
         private string $rootDir,
         private string $product,
@@ -43,7 +49,7 @@ class LicenceService
         return $entity;
     }
 
-    public function endpointSync(?LicenceInstance $entity = null)
+    public function endpointSync(?LicenceInstance $entity = null): ?array
     {
         if ($entity === null)
         {
@@ -56,6 +62,8 @@ class LicenceService
             'version' => $entity->getVersion(),
             'product' => $entity->getProduct(),
             'url' => $this->url,
+            'usages' => $entity->getUsages(),
+            'configs' => $entity->getConfigs(),
         ];
         try {
             $response = $this->httpClient->request('POST', $this->endpoint, [
@@ -68,19 +76,47 @@ class LicenceService
             if ($status === 200)
             {
                 $data = json_decode($response->getContent(), true);
-
+                $this->logger->error(json_encode($data));
                 $entity->setUpdatedAt(new \DateTimeImmutable());
+                $entity->setConfigs($data['configs']);
+                $this->em->persist($entity);
+                $this->em->flush();
+
+                if (isset($data['configs']['messages']))
+                {
+                    foreach ($data['configs']['messages'] as $messageId => $messageConfig) {
+                        $message = new $messageConfig['class']();
+
+                        if ($message instanceof LicenceMessageInterface)
+                        {
+                            $message->setId($messageId);
+
+                            if (isset($messageConfig['args']))
+                            {
+                                foreach($messageConfig['args'] as $key => $value)
+                                {
+                                    $message->__set($key, $value);
+                                }
+                            }
+                        }
+                        $this->bus->dispatch($message);
+                    }
+                }
+                return $data;
             }
+
+            return null;
             
-        } catch(\Throwable $e) {
-            throw $e->getMessage();
+        } catch(\Exception $e) {
+            $this->logger->error('Failed to handle server response:' . $e->getMessage());
+            throw $e;
         }
     }
 
-    public function refresh()
+    public function refresh(): ?array
     {
         $instance = $this->getOrCreate();
-        $this->endpointSync($instance);
+        return $this->endpointSync($instance);
     }
 
     protected function getCodeVersion(): ?string

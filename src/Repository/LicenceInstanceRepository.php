@@ -23,4 +23,13 @@ class LicenceInstanceRepository extends ServiceEntityRepository
             ->getQuery()
             ->getOneOrNullResult();
     }
+
+    public function getRecurrings(): array
+    {
+        $configs = $this->findSingleton()->getConfigs();
+
+        $recurrings = $configs['recurrings'];
+
+        return $recurrings;
+    }
 }

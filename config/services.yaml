@@ -4,6 +4,8 @@ services:
       $repo: '@Beerfranz\LicenceClientBundle\Repository\LicenceInstanceRepository'
       $em: '@doctrine.orm.entity_manager'
       $httpClient: '@http_client'
+      $logger: '@logger'
+      $bus: '@messenger.bus.default'
       $rootDir: '%kernel.project_dir%'
       $endpoint: '%licence_endpoint%'
       $product: '%product_name%'
@@ -14,16 +16,39 @@ services:
       $service: '@Beerfranz\LicenceClientBundle\Service\LicenceService'
     tags: 
       - 'console.command'
-      - name: 'scheduler.task'
-        trigger: 'every'
-        frequency: '%licence_client_frequency%'
-        jitter: '%licence_client_jitter_sec'
-        transports: ['async']
+
+  Beerfranz\LicenceClientBundle\Scheduler\SchedulerProvider:
+    class: Beerfranz\LicenceClientBundle\Scheduler\SchedulerProvider
 
   Beerfranz\LicenceClientBundle\Repository\LicenceInstanceRepository:
     class: Beerfranz\LicenceClientBundle\Repository\LicenceInstanceRepository
     arguments:
       $registry: '@doctrine'
+
+  Beerfranz\LicenceClientBundle\Repository\LicenceUserMessageRepository:
+    class: Beerfranz\LicenceClientBundle\Repository\LicenceUserMessageRepository
+    arguments:
+      $registry: '@doctrine'
+
+  Beerfranz\LicenceClientBundle\Doctrine\LicenceListener:
+    class: Beerfranz\LicenceClientBundle\Doctrine\LicenceListener
+    tags: [doctrine.orm.entity_listener]
+    arguments:
+      $logger: '@logger'
+      $scheduler: '@Beerfranz\LicenceClientBundle\Scheduler\SchedulerProvider'
+
+  Beerfranz\LicenceClientBundle\Scheduler\Handler:
+    arguments:
+      $service: '@Beerfranz\LicenceClientBundle\Service\LicenceService'
+    tags:
+      - messenger.message_handler
+
+  Beerfranz\LicenceClientBundle\MessageHandler\LicenceUserMessageHandler:
+    arguments:
+      $licenceInstanceRepo: '@Beerfranz\LicenceClientBundle\Repository\LicenceInstanceRepository'
+      $em: '@doctrine.orm.entity_manager'
+    tags:
+      - messenger.message_handler
 
 parameters:
   # set default remote URL (override with env var in production)
@@ -31,5 +56,3 @@ parameters:
   licence_endpoint: '%env(LICENCE_ENDPOINT)%'
   product_name: default
   env(URL): https://localhost
-  licence_client_frequency: '1 month'
-  licence_client_jitter_sec: '30'

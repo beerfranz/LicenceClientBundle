@@ -25,7 +25,7 @@ class LicenceCheckCommand extends Command
             $output->writeln("Check done");
 
             return Command::SUCCESS;
-        } catch (\Throwable $e) {
+        } catch (\Exception $e) {
             $output->writeln('<error>Failed to communicate with licence server: ' . $e->getMessage() . '</error>');
             return Command::FAILURE;
         }

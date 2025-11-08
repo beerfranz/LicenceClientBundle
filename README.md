@@ -41,8 +41,6 @@ Set this parameters in `config/services.yaml`:
 parameters:
     product_name: default
     licence_endpoint: https://localhost/data
-    licence_client_frequency: '1 month'
-    licence_client_jitter_sec: '30'
 ```
 
 Set env vars:
