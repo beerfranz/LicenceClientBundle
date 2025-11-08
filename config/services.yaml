@@ -19,6 +19,9 @@ services:
 
   Beerfranz\LicenceClientBundle\Scheduler\SchedulerProvider:
     class: Beerfranz\LicenceClientBundle\Scheduler\SchedulerProvider
+    arguments:
+      $cache: '@scheduler.cache'
+      $lockFactory: '@lock.scheduler.factory'        
 
   Beerfranz\LicenceClientBundle\Repository\LicenceInstanceRepository:
     class: Beerfranz\LicenceClientBundle\Repository\LicenceInstanceRepository
